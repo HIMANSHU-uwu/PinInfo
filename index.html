@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Interactive India Map</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<img src="logo.jpg" alt="Site Logo" class="site-logo">
+  <main class="main-content">
+    <div class="map-container" aria-label="India map (loading)">
+      <div class="map-wrapper"></div>
+    </div>
+    <aside class="info-panel" id="info" aria-live="polite">
+      <div class="resize-handle"></div>
+      <div class="drag-handle" id="dragHandle"></div>
+
+      <h2>Click a state</h2>
+      <p>State information will appear here after you click a state on the map.</p>
+    </aside>
+  </main>
+  <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
+  <img id="pin" src="pin.png" alt="Pin"
+       style="display:none; position:absolute; width:24px; height:24px; pointer-events:none; z-index:1200;">
+
+  <script src="script.js" defer></script>
+</body>
+</html>
