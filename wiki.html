@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-R-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiki Search</title>
+    <!-- Removed Tailwind CSS -->
+    <style>
+        /* Basic font settings */
+        body {
+            font-family: 'Inter', sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #F3F4F6; /* bg-gray-100 */
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            color: #374151; /* text-gray-700 */
+        }
+        
+        .container {
+            max-width: 896px; /* max-w-4xl */
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem; /* p-4 */
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem; /* md:p-8 */
+            }
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        header h1 {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #1F2937; /* text-gray-800 */
+            margin: 0 0 0.5rem 0;
+        }
+        header p {
+            font-size: 1.125rem; /* text-lg */
+            color: #4B5563; /* text-gray-600 */
+            margin: 0;
+        }
+
+        /* Search Bar */
+        #search-form-container {
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        #search-form {
+            display: flex;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            border-radius: 0.5rem; /* rounded-lg */
+            overflow: hidden; /* To contain rounded corners */
+        }
+        #search-input {
+            width: 100%; /* w-full */
+            padding: 1rem; /* p-4 */
+            border: 1px solid #E5E7EB; /* border-gray-200 */
+            border-right: none;
+            border-radius: 0.5rem 0 0 0.5rem; /* rounded-l-lg */
+            font-size: 1rem;
+        }
+        #search-input:focus {
+            outline: 2px solid #3B82F6; /* focus:ring-2 focus:ring-blue-500 */
+            outline-offset: -1px;
+            z-index: 10;
+        }
+        #search-button {
+            background-color: #3B82F6; /* bg-blue-500 */
+            color: white; /* text-white */
+            padding: 1rem; /* p-4 */
+            border: none;
+            border-radius: 0 0.5rem 0.5rem 0; /* rounded-r-lg */
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        #search-button:hover {
+            background-color: #2563EB; /* hover:bg-blue-600 */
+        }
+        #search-button:focus {
+            outline: 2px solid #3B82F6; /* focus:ring-2 focus:ring-blue-500 */
+            outline-offset: -1px;
+            z-index: 10;
+        }
+
+        /* Loading Spinner */
+        #loader {
+            text-align: center;
+            margin: 2.5rem 0; /* my-10 */
+        }
+        .spinner {
+            display: inline-block;
+            width: 3rem; /* w-12 */
+            height: 3rem; /* h-12 */
+            border: 4px solid #3B82F6; /* border-4 border-blue-500 */
+            border-top-color: transparent; /* border-t-transparent */
+            border-radius: 50%; /* rounded-full */
+            animation: spin 1s linear infinite; /* animate-spin */
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        #loader p {
+            color: #4B5563; /* text-gray-600 */
+            margin-top: 0.5rem; /* mt-2 */
+        }
+
+        /* Results Container */
+        #results-container {
+            background-color: white;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+        }
+        
+        /* Helper classes for text */
+        .info-text {
+            color: #6B7280; /* text-gray-500 */
+        }
+        .error-text {
+            color: #EF4444; /* text-red-500 */
+        }
+        .text-center {
+            text-align: center;
+        }
+
+        /* Search Results List */
+        .search-results-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .search-result-item {
+            border-bottom: 1px solid #E5E7EB; /* border-b border-gray-200 */
+            padding-bottom: 1rem; /* pb-4 */
+            margin-bottom: 1rem; /* space-y-4 */
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .search-result-title {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #2563EB; /* text-blue-600 */
+            text-decoration: none;
+            display: block;
+        }
+        .search-result-title:hover {
+            text-decoration: underline; /* hover:underline */
+        }
+        .search-result-snippet {
+            color: #374151; /* text-gray-700 */
+            margin-top: 0.25rem; /* mt-1 */
+        }
+        
+        /* Article Content Display */
+        #content-display {
+            margin-top: 1.5rem; /* mt-6 */
+        }
+        #content-display a {
+            color: #3B82F6; /* blue-500 */
+            text-decoration: underline;
+        }
+        #content-display a:hover {
+            color: #2563EB; /* blue-600 */
+        }
+        #content-display h1 {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #E5E7EB; /* gray-200 */
+            padding-bottom: 0.5rem;
+        }
+        #content-display h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        #content-display h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        #content-display p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        #content-display ul, #content-display ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            list-style-position: outside;
+        }
+        #content-display ul {
+            list-style-type: disc;
+        }
+        #content-display ol {
+            list-style-type: decimal;
+        }
+        
+        /* Hide elements we don't want from the API response */
+        .mw-editsection, .infobox-caption, .thumbcaption, .mw-indicators {
+            display: none !important;
+        }
+        .infobox {
+            float: right;
+            border: 1px solid #E5E7EB;
+            background-color: #F9FAFB;
+            padding: 1rem;
+            margin-left: 1rem;
+            margin-bottom: 1rem;
+            max-width: 300px;
+            font-size: 0.875rem;
+            border-radius: 0.5rem;
+        }
+        .thumb {
+            float: right;
+            margin-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        .thumbinner {
+            border: 1px solid #E5E7EB;
+            padding: 0.5rem;
+            background-color: #F9FAFB;
+            border-radius: 0.5rem;
+        }
+        .thumbimage {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Back Button */
+        .back-button {
+            margin-bottom: 1rem; /* mb-4 */
+            color: #2563EB; /* text-blue-600 */
+            text-decoration: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 1rem;
+        }
+        .back-button:hover {
+            text-decoration: underline; /* hover:underline */
+        }
+        
+        /* Utility */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container">
+        
+        <!-- Header -->
+        <header>
+            <h1>Wiki Search</h1>
+            <p>Search the depths of Wikipedia</p>
+        </header>
+
+        <!-- Search Bar -->
+        <div id="search-form-container">
+            <form id="search-form">
+                <input 
+                    type="search" 
+                    id="search-input" 
+                    placeholder="Search Wikipedia..." 
+                >
+                <button 
+                    type="submit" 
+                    id="search-button"
+                >
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loader" class="hidden">
+            <div class="spinner"></div>
+            <p>Loading...</p>
+        </div>
+
+        <!-- Results Container -->
+        <div id="results-container">
+            <!-- Search Results List -->
+            <div id="search-results">
+                <p class="info-text text-center">Enter a search term to see results.</p>
+            </div>
+            
+            <!-- Article Content Display -->
+            <div id="content-display" class="hidden">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const contentDisplay = document.getElementById('content-display');
+        const loader = document.getElementById('loader');
+
+        // Base URL for the Wikipedia API
+        const WIKI_API_URL = 'https://en.wikipedia.org/w/api.php?origin=*';
+        
+        // --- Removed Gemini API Configuration ---
+
+        // 1. Handle search form submission
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const searchTerm = searchInput.value.trim();
+            if (!searchTerm) return;
+
+            showLoader();
+            clearResults();
+            
+            try {
+                const results = await fetchSearchResults(searchTerm);
+                displaySearchResults(results);
+            } catch (error) {
+                console.error('Search error:', error);
+                displayError('Could not fetch search results. Please try again.');
+            } finally {
+                hideLoader();
+            }
+        });
+
+        // 2. Show/Hide Loader
+        function showLoader() {
+            loader.classList.remove('hidden');
+            searchResults.classList.add('hidden');
+            contentDisplay.classList.add('hidden');
+        }
+
+        function hideLoader() {
+            loader.classList.add('hidden');
+            searchResults.classList.remove('hidden');
+        }
+
+        // 3. Clear previous results
+        function clearResults() {
+            searchResults.innerHTML = '';
+            contentDisplay.innerHTML = '';
+            contentDisplay.classList.add('hidden');
+            // Removed currentArticleText clearing
+        }
+
+        // 4. Display error message
+        function displayError(message) {
+            searchResults.innerHTML = `<p class="error-text text-center">${message}</p>`;
+        }
+
+        // 5. Fetch search results from Wikipedia
+        async function fetchSearchResults(searchTerm) {
+            const params = new URLSearchParams({
+                action: 'query',
+                list: 'search',
+                srsearch: searchTerm,
+                format: 'json',
+                srlimit: 10 // Get top 10 results
+            });
+
+            const response = await fetch(`${WIKI_API_URL}&${params}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.query.search;
+        }
+
+        // 6. Display search results as a list
+        function displaySearchResults(results) {
+            if (results.length === 0) {
+                searchResults.innerHTML = '<p class="info-text text-center">No results found.</p>';
+                return;
+            }
+
+            const resultsList = document.createElement('ul');
+            resultsList.className = 'search-results-list';
+            
+            results.forEach(result => {
+                const li = document.createElement('li');
+                li.className = 'search-result-item';
+                
+                const titleLink = document.createElement('a');
+                titleLink.href = '#';
+                titleLink.className = 'search-result-title';
+                titleLink.textContent = result.title;
+                // Add data attribute to store the exact page title
+                titleLink.dataset.pageTitle = result.title;
+                
+                // Add click event to fetch page content
+                titleLink.addEventListener('click', handleResultClick);
+                
+                const snippet = document.createElement('div');
+                snippet.className = 'search-result-snippet';
+                snippet.innerHTML = result.snippet + '...'; // API provides HTML snippet
+                
+                li.appendChild(titleLink);
+                li.appendChild(snippet);
+                resultsList.appendChild(li);
+            });
+
+            searchResults.appendChild(resultsList);
+        }
+        
+        // 7. Handle click on a search result
+        async function handleResultClick(e) {
+            e.preventDefault();
+            const pageTitle = e.target.dataset.pageTitle;
+            
+            showLoader();
+            searchResults.classList.add('hidden'); // Hide search results list
+
+            try {
+                const pageContent = await fetchPageContent(pageTitle);
+                displayPageContent(pageContent);
+            } catch (error) {
+                console.error('Fetch page error:', error);
+                displayError('Could not fetch the article. Please try again.');
+            } finally {
+                hideLoader();
+                contentDisplay.classList.remove('hidden'); // Show content area
+            }
+        }
+
+        // 8. Fetch the content of a specific Wikipedia page
+        async function fetchPageContent(pageTitle) {
+            const params = new URLSearchParams({
+                action: 'parse',
+                page: pageTitle,
+                format: 'json',
+                prop: 'text', // Get the HTML content
+                disabletoc: true, // Disable table of contents
+            });
+
+            const response = await fetch(`${WIKI_API_URL}&${params}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.parse.text['*'];
+        }
+
+        // 9. Display the fetched page content (MODIFIED)
+        function displayPageContent(htmlContent) {
+            // Clear previous content
+            contentDisplay.innerHTML = '';
+            // Removed currentArticleText clearing
+
+            // 1. Add "Back to Search" button
+            const backButton = document.createElement('button');
+            backButton.textContent = '← Back to Search Results';
+            backButton.className = 'back-button';
+            backButton.onclick = () => {
+                contentDisplay.classList.add('hidden');
+                searchResults.classList.remove('hidden');
+            };
+            contentDisplay.appendChild(backButton);
+
+            // 2. Removed Gemini AI Features
+            // 3. Removed Gemini Output Area
+
+            // 4. Add Article Content
+            
+            // Create a temporary div to parse the HTML and store it
+            const articleHolder = document.createElement('div');
+            articleHolder.innerHTML = htmlContent;
+
+            // Simple sanitization: remove script and style tags
+            articleHolder.querySelectorAll('script, style').forEach(el => el.remove());
+
+            // Make links relative to en.wikipedia.org
+            articleHolder.querySelectorAll('a[href^="/wiki/"]').forEach(a => {
+                a.href = `https://en.wikipedia.org${a.getAttribute('href')}`;
+                a.target = '_blank'; // Open in new tab
+                a.rel = 'noopener noreferrer';
+            });
+            
+            // Removed storing plain text for Gemini
+
+            contentDisplay.appendChild(articleHolder);
+        }
+
+        // --- REMOVED GEMINI FUNCTIONS ---
+        // (Functions 10, 11, 12, 13)
+
+    </script>
+</body>
+</html>
+
